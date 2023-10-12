@@ -12,10 +12,14 @@ struct ContentView: View {
     let viewModel = ViewModel()
 
     var body: some View {
+        // Calculate some radius.
+        // Always keep value at or above 10.
+        let radius = max( (CGFloat(viewModel.dbOutput) + 60) * 3, 10 )
+
         VStack {
-            // Access date string in view model.
-            Text(viewModel.dateString)
-                .font(.title)
+            Circle()
+                .frame(width: radius)
+                .foregroundColor(.red)
         }
         .padding()
     }
