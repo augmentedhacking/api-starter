@@ -7,31 +7,56 @@
 //
 
 import Foundation
+import PolarBleSdk
+import RxSwift
+import CoreBluetooth
+
 
 @Observable
-class ViewModel {
-    var dateString: String = ""
-    var timer: Timer?
+class ViewModel: PolarBleApiObserver {
+    // Heart rate for display.
+    var currentHeartRate: Int = 0
+
+    // Device id.
+    static let deviceId = "B2FCC228"
+
+    // Setup API to listen to heart rate.
+    var api = PolarBleApiDefaultImpl.polarImplementation(DispatchQueue.main,
+                                                         features: [PolarBleSdkFeature.feature_hr])
+
+    // Required for update subscription.
+    var broadcastDisposable: Disposable?
     
     init() {
-        // Setup timer.
-        timer = Timer.scheduledTimer(timeInterval: 1,
-                                     target: self,
-                                     selector: #selector(updateTimer),
-                                     userInfo: nil, 
-                                     repeats: true)
+        api.observer = self
+        
+        broadcastDisposable = api.startListenForPolarHrBroadcasts(nil)
+            .observe(on: MainScheduler.instance)
+            .subscribe{ e in
+                switch e {
+                case .completed:
+                    print("Broadcast listener completed")
+                case .error(let err):
+                    print("Broadcast listener failed. Reason: \(err)")
+                case .next(let broadcast):
+                    print("HR BROADCAST \(broadcast.deviceInfo.name) HR:\(broadcast.hr) Batt: \(broadcast.batteryStatus)")
+
+                    // Capture heart rate.
+                    self.currentHeartRate = Int(broadcast.hr)
+                }
+            }
+        
     }
 
-    // Helper method for getting current time.
-    func getDateString() -> String {
-        let formatter = DateFormatter()
-        formatter.timeStyle = .long
-        let dateString = formatter.string(from: Date())
-        return dateString
+    func deviceConnecting(_ identifier: PolarBleSdk.PolarDeviceInfo) {
     }
-
-    // Called every second.
-    @objc func updateTimer() {
-        dateString = getDateString()
+    
+    func deviceConnected(_ identifier: PolarBleSdk.PolarDeviceInfo) {
+    }
+    
+    func deviceDisconnected(_ identifier: PolarBleSdk.PolarDeviceInfo, pairingError: Bool) {
     }
 }
+
+
+

@@ -13,9 +13,10 @@ struct ContentView: View {
 
     var body: some View {
         VStack {
-            // Access date string in view model.
-            Text(viewModel.dateString)
-                .font(.title)
+            // Access heart rate in view model.
+            Text("\(viewModel.currentHeartRate)")
+                .font(.system(size: 100, weight: .bold))
+                .foregroundColor(.red)
         }
         .padding()
     }
